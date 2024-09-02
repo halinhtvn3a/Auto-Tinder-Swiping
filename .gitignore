@@ -5,7 +5,7 @@ __pycache__/
 
 # C extensions
 *.so
-
+account.py
 # Distribution / packaging
 .Python
 build/
@@ -118,6 +118,7 @@ celerybeat.pid
 
 # SageMath parsed files
 *.sage.py
+
 
 # Environments
 .env
