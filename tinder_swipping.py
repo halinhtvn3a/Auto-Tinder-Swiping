@@ -1,7 +1,7 @@
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
-import credentials
+import account
 from time import sleep
 from random import random, uniform
 
@@ -57,9 +57,9 @@ class TinderBot():
         sleep(1)
         # Type email/password:
         self.driver.find_element(
-            By.XPATH, '//*[@id="email"]').send_keys(credentials.EMAIL)
+            By.XPATH, '//*[@id="email"]').send_keys(account.EMAIL)
         self.driver.find_element(
-            By.XPATH, '//*[@id="pass"]').send_keys(credentials.PASSWORD)
+            By.XPATH, '//*[@id="pass"]').send_keys(account.PASSWORD)
 
         sleep(1.5)
         self.driver.find_element(
