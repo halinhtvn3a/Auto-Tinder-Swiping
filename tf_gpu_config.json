@@ -1,0 +1,7 @@
+{
+  "log_device_placement": true,
+  "allow_growth": true,
+  "gpu_options": {
+    "force_gpu_compatible": true
+  }
+}
