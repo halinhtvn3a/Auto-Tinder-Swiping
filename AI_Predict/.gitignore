@@ -1,0 +1,9 @@
+
+# Ignore model files
+*.h5      # Keras model
+*.pth     # PyTorch
+*.pt      # PyTorch
+*.ckpt    # TensorFlow / PyTorch Lightning
+*.pb      # TensorFlow
+*.tflite  # TensorFlow Lite
+*.onnx    # ONNX format.qodo

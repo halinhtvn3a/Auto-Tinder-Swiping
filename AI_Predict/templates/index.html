@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kiểm thử AI Nhận diện Sở thích</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .preview {
+            max-width: 300px;
+            max-height: 300px;
+            margin: 10px auto;
+            display: block;
+        }
+
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f5f5f5;
+            border-radius: 4px;
+            white-space: pre-wrap;
+        }
+
+        .button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+
+        .button-secondary {
+            background-color: #2196F3;
+        }
+
+        .button-danger {
+            background-color: #f44336;
+        }
+
+        .button-group {
+            margin: 15px 0;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 15px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 14px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Test API Nhận diện Sở thích</h1>
+
+    <div class="container">
+        <!-- Thống kê dữ liệu -->
+        <div class="card">
+            <h2>Thống kê Dataset</h2>
+            <div class="stats" id="stats-container">
+                <div class="stat-item">
+                    <div class="stat-value" id="like-count">0</div>
+                    <div class="stat-label">Ảnh thích</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="dislike-count">0</div>
+                    <div class="stat-label">Ảnh không thích</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="total-count">0</div>
+                    <div class="stat-label">Tổng số ảnh</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="model-status">?</div>
+                    <div class="stat-label">Model</div>
+                </div>
+            </div>
+            <button class="button button-secondary" onclick="loadStats()">Cập nhật thống kê</button>
+        </div>
+
+        <!-- Upload ảnh và dự đoán -->
+        <div class="card">
+            <h2>Tải lên và dự đoán</h2>
+            <input type="file" id="image-input" accept="image/*" onchange="previewImage()">
+            <img id="image-preview" class="preview" style="display: none;">
+
+            <div class="button-group">
+                <button class="button" onclick="predictImage()">Dự đoán</button>
+                <button class="button button-secondary" onclick="saveImage(true)">Lưu là "Thích"</button>
+                <button class="button button-danger" onclick="saveImage(false)">Lưu là "Không thích"</button>
+            </div>
+
+            <div class="result" id="prediction-result" style="display: none;"></div>
+        </div>
+
+        <!-- Train model -->
+        <div class="card">
+            <h2>Huấn luyện Mô hình</h2>
+            <div>
+                <label for="epochs">Số lượng epochs:</label>
+                <input type="number" id="epochs" value="20" min="1" max="100">
+            </div>
+            <div>
+                <label for="batch-size">Batch size:</label>
+                <input type="number" id="batch-size" value="16" min="1" max="64">
+            </div>
+            <button class="button" onclick="trainModel()">Huấn luyện Model</button>
+            <div class="result" id="training-result" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        // URL cơ sở cho API
+        const API_BASE_URL = 'http://localhost:5000/api';
+
+        // Tải thống kê
+        async function loadStats() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/stats`);
+                const data = await response.json();
+
+                document.getElementById('like-count').textContent = data.like_count;
+                document.getElementById('dislike-count').textContent = data.dislike_count;
+                document.getElementById('total-count').textContent = data.total_count;
+                document.getElementById('model-status').textContent = data.model_available ? 'Đã tải' : 'Chưa tải';
+
+                return data;
+            } catch (error) {
+                console.error('Lỗi khi tải thống kê:', error);
+                alert('Không thể kết nối với API. Hãy đảm bảo server đang chạy.');
+            }
+        }
+
+        // Xem trước ảnh được chọn
+        function previewImage() {
+            const input = document.getElementById('image-input');
+            const preview = document.getElementById('image-preview');
+            const resultDiv = document.getElementById('prediction-result');
+
+            resultDiv.style.display = 'none';
+
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+
+                reader.onload = function (e) {
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                };
+
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        // Gửi ảnh để dự đoán
+        async function predictImage() {
+            const input = document.getElementById('image-input');
+            const resultDiv = document.getElementById('prediction-result');
+
+            if (!input.files || !input.files[0]) {
+                alert('Vui lòng chọn một ảnh trước.');
+                return;
+            }
+
+            try {
+                const formData = new FormData();
+                formData.append('image', input.files[0]);
+
+                resultDiv.textContent = 'Đang dự đoán...';
+                resultDiv.style.display = 'block';
+
+                const response = await fetch(`${API_BASE_URL}/predict`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.error) {
+                    resultDiv.textContent = `Lỗi: ${result.error}`;
+                    return;
+                }
+
+                let resultText = '';
+                if (result.model_available) {
+                    resultText = `Kết quả: ${result.prediction ? 'THÍCH' : 'KHÔNG THÍCH'}\n`;
+                    resultText += `Độ tin cậy: ${(result.confidence * 100).toFixed(2)}%\n`;
+                } else {
+                    resultText = 'Model chưa được huấn luyện. Không thể dự đoán.\n';
+                    resultText += 'Hãy lưu một số ảnh và huấn luyện model trước.\n';
+                }
+
+                resultDiv.textContent = resultText;
+            } catch (error) {
+                console.error('Lỗi khi gửi ảnh:', error);
+                resultDiv.textContent = `Lỗi: Không thể kết nối với API. Hãy đảm bảo server đang chạy.`;
+            }
+        }
+
+        // Lưu ảnh với phản hồi
+        async function saveImage(isLike) {
+            const input = document.getElementById('image-input');
+            const resultDiv = document.getElementById('prediction-result');
+
+            if (!input.files || !input.files[0]) {
+                alert('Vui lòng chọn một ảnh trước.');
+                return;
+            }
+
+            try {
+                const formData = new FormData();
+                formData.append('image', input.files[0]);
+                formData.append('feedback', isLike);
+
+                resultDiv.textContent = 'Đang lưu ảnh...';
+                resultDiv.style.display = 'block';
+
+                const response = await fetch(`${API_BASE_URL}/predict`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.error) {
+                    resultDiv.textContent = `Lỗi: ${result.error}`;
+                    return;
+                }
+
+                resultDiv.textContent = `Đã lưu ảnh thành công vào thư mục "${isLike ? 'like' : 'dislike'}"!`;
+
+                // Cập nhật thống kê
+                loadStats();
+            } catch (error) {
+                console.error('Lỗi khi lưu ảnh:', error);
+                resultDiv.textContent = `Lỗi: Không thể kết nối với API. Hãy đảm bảo server đang chạy.`;
+            }
+        }
+
+        // Huấn luyện model
+        async function trainModel() {
+            const epochs = document.getElementById('epochs').value;
+            const batchSize = document.getElementById('batch-size').value;
+            const resultDiv = document.getElementById('training-result');
+
+            try {
+                resultDiv.textContent = 'Đang huấn luyện model...';
+                resultDiv.style.display = 'block';
+
+                const response = await fetch(`${API_BASE_URL}/train`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        epochs: parseInt(epochs),
+                        batch_size: parseInt(batchSize)
+                    })
+                });
+
+                const result = await response.json();
+
+                if (!result.success) {
+                    resultDiv.textContent = `Lỗi: ${result.message}`;
+                    return;
+                }
+
+                resultDiv.textContent = `Huấn luyện thành công!\n${result.message}`;
+
+                // Cập nhật thống kê
+                loadStats();
+            } catch (error) {
+                console.error('Lỗi khi huấn luyện model:', error);
+                resultDiv.textContent = `Lỗi: Không thể kết nối với API. Hãy đảm bảo server đang chạy.`;
+            }
+        }
+
+        // Tải thống kê khi trang được tải
+        window.onload = loadStats;
+    </script>
+</body>
+
+</html>
